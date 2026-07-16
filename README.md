@@ -42,4 +42,4 @@ Below are the descriptions of the variables saved in the output file.
 
 * `klabel`: Labels of high-symmetry points along the $k$-path.
 * `ticks`: Coordinates along the $k$-path corresponding to each label in `klabel`.
-* *Note: These variables are always saved regardless of your input choice (Y/N).*
+* *Note: These variables are always printed in your terminal regardless of your input choice (Y/N).*
