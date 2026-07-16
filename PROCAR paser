@@ -1,0 +1,398 @@
+import numpy as np
+import re
+
+# import files
+procar_file = 'PROCAR'
+kpoints_file = 'KPOINTS'
+
+with open(procar_file, 'r') as f:
+    procar_lines = f.readlines()
+
+with open(kpoints_file, 'r', encoding='UTF8') as f:
+    kpt_lines = f.readlines()
+
+# read basic info
+procar_info = procar_lines[1].strip().split()
+nkpts, nbands, nions = int(procar_info[3]), int(procar_info[7]), int(procar_info[11])
+
+orb_indices = []
+orb_info = procar_lines[7].strip().split()
+orb_indices = orb_info[1:]
+num_orbs = len(orb_indices)
+
+
+
+# function 1. define constants to parse SPIN = 1 system
+def define_const(procar_lines):
+    val_para = procar_lines[:nbands*nions*8]
+    b_num = []
+    k_num = []
+    o_num = []
+    
+    for i in range(int(len(val_para))):
+        curr_line = val_para[i].strip().split()
+        if not curr_line:
+            continue
+    
+        if curr_line[0] == 'k-point':
+            k_num.append(i) 
+            if len(k_num) == 2:
+                break
+        
+        elif curr_line[0] == 'band':
+            b_num.append(i)
+    
+        elif curr_line[0] == '1':
+            o_num.append(i)
+    
+    line_const = b_num[1]-b_num[0]
+    iter_const = k_num[1]-k_num[0]
+    orb_const  = o_num[1]-o_num[0]
+
+    return line_const, iter_const, orb_const
+
+
+
+# function 2.  define constants to parse SPIN = 2 system
+def define_const_spin(procar_lines):
+    b_num = []
+    k_num = []
+    
+    for i in range(len(procar_lines)):
+        curr_line = procar_lines[i].strip().split()
+        if not curr_line:
+            continue
+        if curr_line[0] == 'k-point':
+            k_num.append(i) 
+            if len(k_num) == 2:
+                break
+        elif curr_line[0] == 'band':
+            b_num.append(i)
+  
+    line_const = b_num[1]-b_num[0]
+    iter_const = k_num[1]-k_num[0]
+  
+    lt = []
+    
+    for i in range(len(procar_lines[iter_const*nkpts-10:iter_const*nkpts+10])):
+        curr_line = procar_lines[i].strip().split()
+        if not curr_line:
+            continue
+        if curr_line[0] == '#':
+            lt.append(i)
+        elif curr_line[0] == 'k-point':
+            lt.append(i)
+            break
+    blank = lt[1] - lt[0]
+    
+    return line_const, iter_const, blank
+
+
+
+# function 3. check validity of PROCAR file of SPIN = 1 system
+def check_validity(nkpts, iter_const):
+    valid_num = iter_const*nkpts + 2
+    
+    if len(procar_lines) != valid_num:
+        raise ValueError(f"Invalid PROCAR: Expected {valid_num}, but got {len(procar_lines)}")
+    else:
+        print('parsing PROCAR start')
+    return
+
+
+
+# function 4. check validity of PROCAR file of SPIN = 2; LNONCOLLINEAR = FLASE system
+def check_validity_s2nclf(nkpts, iter_const, blank):
+    valid_num = iter_const*nkpts*2 + blank +1 
+    
+    if len(procar_lines) != valid_num:
+        raise ValueError(f"Invalid PROCAR: Expected {valid_num}, but got {len(procar_lines)}")
+    else:
+        print('parsing PROCAR start')
+    return
+
+
+
+# function 5. main parsing function of SPIN = 1 system
+def sp1_nonco():
+    wgt      = np.zeros(nkpts)
+    k_coords = np.zeros((nkpts, 3))
+    
+    for i in range(0, nkpts):
+        line_part = procar_lines[3 + iter_const*(i)]
+        numbers = re.findall(r'[-+]?\d*\.\d+|\d+', line_part)
+            
+        a, b, c = map(float, numbers[1:4])
+        k_coords[i] = np.array([a, b, c])
+    
+# main variables
+    orb_data = {}
+    ene_data = {}
+    
+    for i in range(1, nions + 1):
+        orb_data[i] = np.zeros((nkpts, nbands, num_orbs), dtype=np.float16)
+        ene_data = np.zeros((nkpts, nbands), dtype=np.float64)
+    
+    for i_k in range(nkpts):
+        for i_b in range(nbands):
+            for i_ion in range(1, nions+1):
+                curr_line_idx = 8 + (i_ion - 1) + (line_const * i_b) + (iter_const * i_k)
+                
+                line_vals = procar_lines[curr_line_idx].strip().split()
+                
+                vals = [float(line_vals[idx]) for idx in range(1, num_orbs+1)]
+                orb_data[i_ion][i_k, i_b, :] = vals
+            
+            ene_line_idx = 5 + (line_const * i_b) + (iter_const * i_k)
+            ene_data[i_k][i_b] = float(procar_lines[ene_line_idx].strip().split()[4])
+
+    delta = np.linalg.norm(k_coords[1:] - k_coords[:-1], axis=1)
+    k_path = np.concatenate(([0], np.cumsum(delta)))
+
+    return orb_data, ene_data, k_path
+
+
+
+# function 6. main parsing function of SPIN = 2; LNONCOLLINEAR = TRUE system
+def sp2_co():
+    wgt      = np.zeros(nkpts)
+    k_coords = np.zeros((nkpts, 3))
+    
+    for i in range(0, nkpts):
+        line_part = procar_lines[3 + iter_const*(i)]
+        numbers = re.findall(r'[-+]?\d*\.\d+|\d+', line_part)
+            
+        a, b, c = map(float, numbers[1:4])
+        k_coords[i] = np.array([a, b, c])
+    
+# main variables
+    orb_tot_data = {}                # spin up + spin_down
+    orb_magx_data = {}
+    orb_magy_data = {}
+    orb_magz_data = {}               # spin up - spin_down
+    ene_data = {}
+    
+    for i in range(1, nions + 1):
+        orb_tot_data[i] = np.zeros((nkpts, nbands, num_orbs), dtype=np.float16)
+        orb_magx_data[i] = np.zeros((nkpts, nbands, num_orbs), dtype=np.float16)
+        orb_magy_data[i] = np.zeros((nkpts, nbands, num_orbs), dtype=np.float16)
+        orb_magz_data[i] = np.zeros((nkpts, nbands, num_orbs), dtype=np.float16)
+        orb_magz_data[i] = np.zeros((nkpts, nbands, num_orbs), dtype=np.float16)
+        ene_data = np.zeros((nkpts, nbands), dtype=np.float64)
+
+    for i_k in range(nkpts):
+        for i_b in range(nbands):
+            for i_ion in range(1, nions+1):
+                curr_line_idx = 8 + orb_const*0 + (i_ion - 1) + (line_const * i_b) + (iter_const * i_k)
+                line_vals = procar_lines[curr_line_idx].strip().split()
+                
+                vals = [float(line_vals[idx]) for idx in range(1, num_orbs+1)]
+                orb_tot_data[i_ion][i_k, i_b, :] = vals
+            
+            ene_line_idx = 5 + (line_const * i_b) + (iter_const * i_k)
+            ene_data[i_k][i_b] = float(procar_lines[ene_line_idx].strip().split()[4])
+    
+    for i_k in range(nkpts):
+        for i_b in range(nbands):
+            for i_ion in range(1, nions+1):
+                curr_line_idx = 8 + orb_const*1 + (i_ion - 1) + (line_const * i_b) + (iter_const * i_k)
+                line_vals = procar_lines[curr_line_idx].strip().split()
+                
+                vals = [float(line_vals[idx]) for idx in range(1, num_orbs+1)]
+                orb_magx_data[i_ion][i_k, i_b, :] = vals
+    
+    for i_k in range(nkpts):
+        for i_b in range(nbands):
+            for i_ion in range(1, nions+1):
+                curr_line_idx = 8 + orb_const*2 + (i_ion - 1) + (line_const * i_b) + (iter_const * i_k)
+                line_vals = procar_lines[curr_line_idx].strip().split()
+                
+                vals = [float(line_vals[idx]) for idx in range(1, num_orbs+1)]
+                orb_magy_data[i_ion][i_k, i_b, :] = vals
+    
+    for i_k in range(nkpts):
+        for i_b in range(nbands):
+            for i_ion in range(1, nions+1):
+                curr_line_idx = 8 + orb_const*3 + (i_ion - 1) + (line_const * i_b) + (iter_const * i_k)
+                line_vals = procar_lines[curr_line_idx].strip().split()
+                
+                vals = [float(line_vals[idx]) for idx in range(1, num_orbs+1)]
+                orb_magz_data[i_ion][i_k, i_b, :] = vals
+
+    delta = np.linalg.norm(k_coords[1:] - k_coords[:-1], axis=1)
+    k_path = np.concatenate(([0], np.cumsum(delta)))
+                
+    return orb_tot_data, orb_magx_data, orb_magy_data, orb_magz_data, ene_data, k_path
+
+
+
+# function 7. main parsing function of SPIN = 2; LNONCOLLINEAR = FALSE system
+def sp2_nco():
+    wgt      = np.zeros(nkpts)
+    k_coords = np.zeros((nkpts, 3))
+    
+    for i in range(0, nkpts):
+        line_part = procar_lines[3 + iter_const*(i)]
+        numbers = re.findall(r'[-+]?\d*\.\d+|\d+', line_part)
+            
+        a, b, c = map(float, numbers[1:4])
+        k_coords[i] = np.array([a, b, c])
+    
+# main variables
+    orb_up_data = {}
+    orb_down_data = {}
+    ene_data = {}
+    
+    for i in range(1, nions + 1):
+        orb_up_data[i] = np.zeros((nkpts, nbands, num_orbs), dtype=np.float16)
+        orb_down_data[i] = np.zeros((nkpts, nbands, num_orbs), dtype=np.float16)
+        ene_data = np.zeros((nkpts, nbands), dtype=np.float64)
+
+    for i_k in range(nkpts):
+        for i_b in range(nbands):
+            for i_ion in range(1, nions+1):
+                curr_line_idx = 8 + (i_ion - 1) + (line_const * i_b) + (iter_const * i_k)
+                
+                line_vals = procar_lines[curr_line_idx].strip().split()
+                
+                vals = [float(line_vals[idx]) for idx in range(1, num_orbs+1)]
+                orb_up_data[i_ion][i_k, i_b, :] = vals
+            
+            ene_line_idx = 5 + (line_const * i_b) + (iter_const * i_k)
+            ene_data[i_k][i_b] = float(procar_lines[ene_line_idx].strip().split()[4])
+    
+    down_start = 7+iter_const*(nkpts-1)+blank+iter_const*1
+    
+    for i_k in range(nkpts):
+        for i_b in range(nbands):
+            for i_ion in range(1, nions+1):
+                curr_line_idx = down_start + (i_ion - 1) + (line_const * i_b) + (iter_const * i_k)
+                
+                line_vals = procar_lines[curr_line_idx].strip().split()
+                
+                vals = [float(line_vals[idx]) for idx in range(1, num_orbs+1)]
+                orb_down_data[i_ion][i_k, i_b, :] = vals
+
+    delta = np.linalg.norm(k_coords[1:] - k_coords[:-1], axis=1)
+    k_path = np.concatenate(([0], np.cumsum(delta)))
+    
+    return orb_up_data, orb_down_data, ene_data, k_path 
+
+
+# user input & compare, validation
+ispin  = int(input("ISPIN ( 1 / 2 ) :\t\t"))
+
+if ispin == 2:
+    lnonco = input("LNONCOLLINEAR ( T / F ) :\t")
+elif ispin == 1:
+    lnonco = 'F'
+else:
+    raise ValueError(f"Invalid input. 1 or 2 only")
+
+if lnonco != 'F' and lnonco != 'T':
+    raise ValueError(f"Invalid input. Capital T or Capital F only")
+
+if ispin == 2 and lnonco == 'F':
+    line_const, iter_const, blank = define_const_spin(procar_lines)
+    check_validity_s2nclf(nkpts, iter_const, blank)
+else:
+    line_const, iter_const, orb_const = define_const(procar_lines)
+    check_validity(nkpts, iter_const)
+
+
+
+# main circuit
+if ispin == 1:
+    orb_data, ene_data, k_path = sp1_nonco()
+elif lnonco == 'T':
+    orb_tot_data, orb_magx_data, orb_magy_data, orb_magz_data, ene_data, k_path = sp2_co()
+else:
+    orb_up_data, orb_down_data, ene_data, k_path = sp2_nco()
+
+print('parsing PROCAR done')
+print()
+print('saving data into binary format...')
+
+if ispin == 1:
+    np.savez_compressed('procar_results.npz', 
+                            procar=orb_data,
+                            eigenval=ene_data, 
+                            kpath=k_path,
+                            infos=[nkpts, nbands, nions])
+elif lnonco == 'T':
+    np.savez_compressed('procar_results.npz', 
+                            procar=orb_tot_data, 
+                            procar_x=orb_magx_data, 
+                            procar_y=orb_magy_data, 
+                            procar_z=orb_magz_data, 
+                            eigenval=ene_data, 
+                            kpath=k_path,
+                            infos=[nkpts, nbands, nions])
+else:
+    np.savez_compressed('procar_results.npz', 
+                            procar_up=orb_up_data, 
+                            procar_down=orb_down_data, 
+                            eigenval=ene_data, 
+                            kpath=k_path,
+                            infos=[nkpts, nbands, nions])
+    
+print('saved!')
+print()
+
+
+# k=path related circuit
+print('parsing KPOITNS start')
+
+nkpts_per_part = int(kpt_lines[1].strip().split()[0])
+
+k_orders = ['Γ']
+for line in kpt_lines[4:]:
+    coord_info = line.strip().split()
+    
+    if len(coord_info) >= 4:
+        label = coord_info[3].strip('""')
+        
+        if label == 'Gamma' or label == 'GAMMA':
+            label = 'Γ'
+        else:
+            label = label
+        
+        if label == k_orders[-1]:
+            pass
+        else:
+            k_orders.append(label)
+    else:
+        continue
+
+tol = 1e-3                    # modify if it's needed
+x_ticks = []
+
+for i in range(int(nkpts/nkpts_per_part)):
+    if i == 0:
+        x_ticks.append(k_path[i*nkpts_per_part])
+    elif k_path[i*nkpts_per_part] - k_path[i*nkpts_per_part-1] <= tol:
+        x_ticks.append(k_path[i*nkpts_per_part])
+    else:
+        x_ticks.append(k_path[i*nkpts_per_part-1])
+        x_ticks.append(k_path[i*nkpts_per_part])
+        
+x_ticks.append(k_path[-1])
+
+print('parsing KPOINTS done')
+print()
+print("orbitals: ", orb_indices)
+print("high symmetry points: ", k_orders)
+print("positons: ", np.array(x_ticks).tolist())
+
+save_kpts = input("save k-path information ( Y / N ) :\t")
+
+if save_kpts == 'Y':
+    print('saving data into binary format...')
+    print()
+    np.savez_compressed('kpts_infos.npz',
+                        klabel=k_orders,
+                        ticks=x_ticks)
+    print('saved!')
+
+else:
+    continue
