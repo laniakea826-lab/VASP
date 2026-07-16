@@ -1,4 +1,6 @@
-# VASP PROCAR PARSER
+# PROCAR parser
+Manufacture output files from VASP calculation; band structure.
+
 Saves PROCAR data into `.npz` format. 
 Below are the descriptions of the variables saved in the output file.
 
