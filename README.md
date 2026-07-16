@@ -35,3 +35,11 @@ Below are the descriptions of the variables saved in the output file.
 * `eigenval`: Same as in the `ISPIN = 1` system.
 * `k_path`: Same as in the `ISPIN = 1` system.
 * `infos`: Same as in the `ISPIN = 1` system.
+
+---
+
+## 4. Optional: kpts_infos.npz
+
+* `klabel`: Labels of high-symmetry points along the $k$-path.
+* `ticks`: Coordinates along the $k$-path corresponding to each label in `klabel`.
+* *Note: These variables are always saved regardless of your input choice (Y/N).*
