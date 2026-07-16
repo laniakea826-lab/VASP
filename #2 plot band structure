@@ -1,0 +1,46 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# import data from "#1 PROCAR paser(#1)"
+data = np.load('procar_results_PS_4022.npz', allow_pickle=True)
+
+orb_data_loaded = data['procar'].item()
+eigenval = data['eigenval']
+k_path = data['kpath']
+nkpts, nbands, nions = data['infos']               # if it's needed
+
+fermi_energy = 0.0                                 # have to be modified!!!!!
+
+
+
+# insert particular information
+# related array had been printed in your terminal in #1 phase
+# or import data from file 'kpts_infos.npz' from #1 phase
+k_odrer = ['Γ', 'M', 'X', 'Γ']
+x_ticks = [0.0, 0.7071067811865476, 1.2071067811865486, 1.7071067811865501]
+
+
+# function 1. get weights correspond to each orbital and atom.
+def get_fatband_weights(ion_indices, orb_indices):
+    raw_data_list = [orb_data_loaded[i] for i in ion_indices]
+    combined_data = np.array(raw_data_list)
+    atom_use_data = np.sum(combined_data, axis=0)
+    
+    weights_kpts_bands = np.sum(atom_use_data[:, :, orb_indices[0]:orb_indices[-1]+1], axis=2)
+    
+    weights_selected = weights_kpts_bands[:, band_use - 1]
+    
+    return weights_selected.flatten(order='F') * (200 / len(ion_indices)) * 0.3
+
+
+
+# necessary input
+band_use = np.arange(1, 81)
+
+# e.g. user selected data
+idx_atom = np.arange(1, 3)           # import data of atom 1 and atom 2
+
+idx_P = np.arange(1, 4)              # the order of every orbitals follow VASP PROCAR
+idx_d_xy = np.arange(4, 6)
+
+d_Xy_flat_atom12 = get_fatband_weights(idx_atom, idx_d_xy)
