@@ -1,0 +1,212 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+fermi_energy = 0.0                             # USER INPUT
+
+# parse DOSCAR
+with open("DOSCAR_IN_0530", "r") as f:
+    lines = f.readlines()
+header_lines = 6
+n_dos_points = int(lines[5].split()[2])
+n_atoms = int(lines[0].split()[0])
+
+# tdos
+dos_data = np.array([
+    list(map(float, line.split()))
+    for line in lines[header_lines : header_lines + n_dos_points]
+])
+energies = dos_data[:, 0]
+total_dos = dos_data[:, 1]
+accumulated_ratio = dos_data[:, 2]
+
+# pdos
+pdos_lines = lines[header_lines + n_dos_points:]
+pdos_data = []
+for line in pdos_lines[:]:
+    parts = line.split()
+    if len(parts) >= 10:
+        try:
+            pdos_data.append([float(x) for x in parts])
+        except ValueError:
+            continue
+pdos_data = np.array(pdos_data)
+
+
+
+# manufacturing data
+s_dos = pdos_data[:, 1]
+p_dos = pdos_data[:, 2:5].sum(axis=1)
+d_dos = pdos_data[:, 5:10].sum(axis=1)
+f_dos = pdos_data[:, 10:17].sum(axis=1)
+
+py_dos = pdos_data[:, 2]
+pz_dos = pdos_data[:, 3]
+px_dos = pdos_data[:, 4]
+
+dxy_dos = pdos_data[:, 5]
+dyz_dos = pdos_data[:, 6]
+dzr_dos = pdos_data[:, 7]
+dxz_dos = pdos_data[:, 8]
+dxy2_dos = pdos_data[:, 9]
+
+fn3_dos = pdos_data[:, 10]
+fn2_dos = pdos_data[:, 11]
+fn1_dos = pdos_data[:, 12]
+fnn_dos = pdos_data[:, 13]
+fp1_dos = pdos_data[:, 14]
+fp2_dos = pdos_data[:, 15]
+fp3_dos = pdos_data[:, 16]
+
+atom_sdos_list = [
+    s_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_pdos_list = [
+    p_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_ddos_list = [
+    d_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_fdos_list = [
+    f_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+
+
+atom_py_dos_list = [
+    py_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_pz_dos_list = [
+    pz_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_px_dos_list = [
+    px_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+
+
+atom_dxy_dos_list = [
+    dxy_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_dyz_dos_list = [
+    dyz_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_dzr_dos_list = [
+    dzr_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_dxz_dos_list = [
+    dxz_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_dxy2_dos_list = [
+    dxy2_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+
+
+atom_fn3_dos_list = [
+    fn3_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_fn2_dos_list = [
+    fn2_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_fn1_dos_list = [
+    fn1_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_fnn_dos_list = [
+    fnn_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_fp1_dos_list = [
+    fp1_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_fp2_dos_list = [
+    fp2_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+atom_fp3_dos_list = [
+    fp3_dos[i*n_dos_points : (i+1)*n_dos_points]
+    for i in range(n_atoms)
+]
+
+
+total_sdos = sum(atom_sdos_list)
+total_pdos = sum(atom_pdos_list)
+total_ddos = sum(atom_ddos_list)
+total_fdos = sum(atom_fdos_list)
+
+total_py_dos = sum(atom_py_dos_list)
+total_pz_dos = sum(atom_pz_dos_list)
+total_px_dos = sum(atom_px_dos_list)
+
+total_dxy_dos = sum(atom_dxy_dos_list)
+total_dyz_dos = sum(atom_dyz_dos_list)
+total_dzr_dos = sum(atom_dzr_dos_list)
+total_dxz_dos = sum(atom_dxz_dos_list)
+total_dxy2_dos = sum(atom_dxy2_dos_list)
+
+total_fn3_dos = sum(atom_fn3_dos_list)
+total_fn2_dos = sum(atom_fn2_dos_list)
+total_fn1_dos = sum(atom_fn1_dos_list)
+total_fnn_dos = sum(atom_fnn_dos_list)
+total_fp1_dos = sum(atom_fp1_dos_list)
+total_fp2_dos = sum(atom_fp2_dos_list)
+total_fp3_dos = sum(atom_fp3_dos_list)
+
+
+
+
+
+# Example of plotting a DOS
+# user selected data
+atom1_sdos_list = atom_sdos_list[2]+atom_sdos_list[3]+atom_sdos_list[4]+atom_sdos_list[5]
+atom2_ddos_list = atom_ddos_list[6]+atom_ddos_list[7]
+
+# plot
+plt.figure(figsize=(8, 4))
+plt.plot(energies-fermi_energy, total_dos, label='Total', color='black', linewidth=1.)
+plt.plot(energies-fermi_energy, atom1_sdos_list, label='Atom1-s', color='green', linewidth=1.)
+plt.plot(energies-fermi_energy, atom2_ddos_list, label='Atom2-p', color='red', linewidth=1.)
+plt.axvline(x=0, color='black', linestyle='-', zorder=-1, linewidth=0.5)
+plt.xlim(-4, 4)
+plt.ylim(0, 6)
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+
+#plt.xlabel("Energy (eV)", fontsize=15)
+plt.ylabel(r"$DOS (eV^{-1})$", fontsize=15, font='serif')
+#plt.title("Title of work")
+plt.legend(loc='right', bbox_to_anchor=(1.17, 0.5))
+#plt.grid(True, zorder=-1, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.savefig('Title.png')
+plt.show()
