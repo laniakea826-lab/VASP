@@ -1,33 +1,38 @@
-### VASP
-PROCAR paser . following band structure plot
-
+# VASP PROCAR PASER
 Saving data as npz format.
-Each variable 
+Check the variable below
 
-# ISPIN = 1 system
+## ISPIN = 1 system
+procar:     data corresponds to each orbitals. DICT itself.
+            Atom 1 of POSCAR corresponds to Atom 1 of 'procar'.
+            procar[n] is 3D array itself with shape (number of k points, NBANDS, number of orbitals)
+        NOTE. it's index does not start from 0!!!
+        
+eigenval:   Energy eigenvalues.
+            Can be draw normal energy band structure with 'k_path' variable.
+            
+k_path:     k_path coordinates.
+
+infos:      Information of the calculation.
+            Form of [nkpts, NBANDSM nions]
 
 
 
+## ISPIN = 2; LNONCOLLINEAR = TRUE system
+procar:     Similar to adressed in ISPIN = 1 system; represents total magnetic direction data.
 
-if ispin == 1:
-    np.savez_compressed('procar_results.npz', 
-                            procar=orb_data,
-                            eigenval=ene_data, 
-                            kpath=k_path,
-                            infos=[nkpts, nbands, nions])
-elif lnonco == 'T':
-    np.savez_compressed('procar_results.npz', 
-                            procar=orb_tot_data, 
-                            procar_x=orb_magx_data, 
-                            procar_y=orb_magy_data, 
-                            procar_z=orb_magz_data, 
-                            eigenval=ene_data, 
-                            kpath=k_path,
-                            infos=[nkpts, nbands, nions])
-else:
-    np.savez_compressed('procar_results.npz', 
-                            procar_up=orb_up_data, 
-                            procar_down=orb_down_data, 
-                            eigenval=ene_data, 
-                            kpath=k_path,
-                            infos=[nkpts, nbands, nions])
+procar_x, procar_y, procar_z: Simliar to variable 'procar'. They represent each magnetic direction.
+        
+eigenval:   Adressed in ISPIN = 1 system
+k_path:     Adressed in ISPIN = 1 system
+infos:      Adressed in ISPIN = 1 system
+
+
+
+## ISPIN = 2; LNONCOLLINEAR = FALSE system
+procar_up:    Similar to adressed in ISPIN = 1 system; represents spin up data
+procar_down:  Similar to adressed in ISPIN = 1 system; represents spin down data
+        
+eigenval:   Adressed in ISPIN = 1 system
+k_path:     Adressed in ISPIN = 1 system
+infos:      Adressed in ISPIN = 1 system
