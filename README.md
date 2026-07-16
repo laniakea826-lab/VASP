@@ -1,8 +1,8 @@
 # PROCAR parser
 Manufacture output files from VASP calculation; band structure.
 
-Saves PROCAR data into `.npz` (binary) format.
-It is easily imported and plotted, with about 5% of the original PROCAR size. 
+Saves PROCAR data into `.npz` (binary) format.  
+It is easily imported and plotted, with about 5% of the original PROCAR size.  
 *NOTE. Unreadable for human!*
 
 Below are the descriptions of the variables saved in the output file.
