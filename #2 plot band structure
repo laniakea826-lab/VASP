@@ -16,9 +16,9 @@ fermi_energy = 0.0                                 # have to be modified!!!!!
 # insert particular information
 # related array had been printed in your terminal in #1 phase
 # or import data from file 'kpts_infos.npz' from #1 phase
-k_odrer = ['Γ', 'M', 'X', 'Γ']
-x_ticks = [0.0, 0.7071067811865476, 1.2071067811865486, 1.7071067811865501]
-
+# sometime they have to be moded to appropriate format
+k_odrer = ['Γ', 'X', 'M', 'Γ', 'Z | X', '  ', ' R | M', '  ', 'A']
+x_ticks = [0.0, 0.5590169720142998, 1.1180339440286005, 1.984059313172021, 2.4801683631720235, 3.037456124937957, 3.5347916449379584, 4.092622124923035, 4.591184114923047]
 
 # function 1. get weights correspond to each orbital and atom.
 def get_fatband_weights(ion_indices, orb_indices):
@@ -37,10 +37,70 @@ def get_fatband_weights(ion_indices, orb_indices):
 # necessary input
 band_use = np.arange(1, 81)
 
-# e.g. user selected data
-idx_atom = np.arange(1, 3)           # import data of atom 1 and atom 2
 
-idx_P = np.arange(1, 4)              # the order of every orbitals follow VASP PROCAR
+
+# e.g.
+# user selected data
+idx_atom12 = np.arange(1, 3)         # import data of atom 1 and atom 2
+idx_atom4 = np.arange(4, 5)         # import data of atom 4
+
+idx_p = np.arange(1, 4)              # the order of every orbitals follow VASP PROCAR
 idx_d_xy = np.arange(4, 6)
 
-d_Xy_flat_atom12 = get_fatband_weights(idx_atom, idx_d_xy)
+d_xy_flat_atom12 = get_fatband_weights(idx_atom12, idx_d_xy)
+p_flat_atom4 = get_fatband_weights(idx_atom4, idx_p)
+
+# plot
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True, figsize=(9, 6), gridspec_kw={'wspace': 0.05,
+                                                'width_ratios': [5, x_ticks[6]-x_ticks[5], x_ticks[8]-x_ticks[7]]}, constrained_layout=False)
+
+for band in range(nbands):
+    for ax in [ax1, ax2, ax3]:
+        ax.plot(k_path, eigenval[:, band]-fermi_energy, color='black', linewidth=0.8)
+        x_flat = np.tile(np.array(k_path), len(band_use))
+        y_flat = (eigenval[:, band_indices] - fermi_energy).flatten(order='F') 
+
+        ax.scatter(x_flat, y_flat, s=d_xy_flat_atom12, label='atom, d_xy', c='green', alpha=0.3)
+        ax.scatter(x_flat, y_flat, s=p_flat_atom4, label='atom4, p', c='green', alpha=0.3)
+
+ax1.set_xlim(x_ticks[0], x_ticks[4])
+ax2.set_xlim(x_ticks[5], x_ticks[6])
+ax3.set_xlim(x_ticks[7], x_ticks[8])
+
+ax1.tick_params(axis='y', labelsize=13)
+ax2.tick_params(axis='y', length=0)
+ax3.tick_params(axis='y', length=0)
+
+for ax in [ax1, ax2, ax3]:
+    ax.axhline(0, color='gray', linestyle='--', zorder=-1)
+
+for pos in x_ticks[0:5]:
+    ax1.axvline(x=pos, color='gray', linestyle='-', linewidth=0.7, zorder=-1, alpha=0.7)
+    print(pos)
+
+for pos in x_ticks[5:7]:
+    ax2.axvline(x=pos, color='gray', linestyle='-', linewidth=0.7, zorder=-1, alpha=0.7)
+    print(pos)
+
+for pos in x_ticks[7:9]:
+    ax3.axvline(x=pos, color='gray', linestyle='-', linewidth=0.7, zorder=-1, alpha=0.7)
+    print(pos)
+
+ax1.set_xticks(x_ticks[0:5])
+ax1.set_xticklabels(k_order[0:5], fontsize=15)
+
+ax2.set_xticks(x_ticks[5:7])
+ax2.set_xticklabels(k_odrer[5:7], fontsize=15)
+
+ax3.set_xticks(x_ticks[7:9])
+ax3.set_xticklabels(k_odrer[7:9], fontsize=15)
+
+#plt.xlim(k_path[0], k_path[-1])
+plt.ylim(-4, 4)
+
+#plt.suptitle("Title of the work", fontsize=18)
+ax1.set_ylabel(r"$E - E_F (eV)$", fontsize=15)
+#ax1.legend()
+#plt.savefig("title of your work.png", dpi=300)
+plt.show()
+#plt.close()
