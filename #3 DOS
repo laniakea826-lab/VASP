@@ -31,7 +31,11 @@ for line in pdos_lines[:]:
             continue
 pdos_data = np.array(pdos_data)
 
-
+# ==============================================================================
+# [DATA PROCESSING] - Extracting orbital DOS for each atom
+# ==============================================================================
+atom_sdos_list = [ ... ]
+# (이하 생략)
 
 # manufacturing data
 s_dos = pdos_data[:, 1]
