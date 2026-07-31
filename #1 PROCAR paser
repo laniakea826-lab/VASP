@@ -393,6 +393,3 @@ if save_kpts == 'Y':
                         klabel=k_orders,
                         ticks=x_ticks)
     print('saved!')
-
-else:
-    continue
