@@ -52,7 +52,7 @@ Below are the descriptions of the variables saved in the output file.
 ### Usage Example (detailed guide inside the code)
 python3 filename.py
 ```python
-ISPIN ( 1 / 2 ) :                      # assume you inserted 1
+ISPIN ( 1 / 2 ) :                          # insert your option
 
 parsing PROCAR start
 parsing PROCAR done
@@ -70,4 +70,6 @@ saved!
 orbitals:  ['s', 'py', 'pz', 'px', 'dxy', 'dyz', 'dz2', 'dxz', 'x2-y2', 'fy3x2', 'fxyz', 'fyz2', 'fz3', 'fxz2', 'fzx2', 'fx3', 'tot']
 high symmetry points:  ['Γ', 'X', 'M', 'Γ', 'Z', 'X', 'R', 'M', 'A']
 positons:  [0.0, 0.5, 1.0000000000000002, 1.707106781186545, 2.2071067811865466, 2.914213562373094, 3.414213562373096, 4.121320343559644, 4.6213203435596455]
+
+save k-path information ( Y / N ) :                          # insert your choice
 ```
