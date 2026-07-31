@@ -46,3 +46,28 @@ Below are the descriptions of the variables saved in the output file.
 * `klabel`: Labels of high-symmetry points along the $k$-path.
 * `ticks`: Coordinates along the $k$-path corresponding to each label in `klabel`.
 * *Note: These variables are always printed in your terminal regardless of your input choice (Y/N).*
+
+---
+
+### Usage Example (detailed guide inside the code)
+python3 filename.py
+```python
+ISPIN ( 1 / 2 ) :                      # assume you inserted 1
+
+parsing PROCAR start
+parsing PROCAR done
+
+saving data into binary format...
+saved!
+
+parsing KPOITNS start
+parsing KPOINTS done
+
+saving data into binary format...
+
+saved!
+
+orbitals:  ['s', 'py', 'pz', 'px', 'dxy', 'dyz', 'dz2', 'dxz', 'x2-y2', 'fy3x2', 'fxyz', 'fyz2', 'fz3', 'fxz2', 'fzx2', 'fx3', 'tot']
+high symmetry points:  ['Γ', 'X', 'M', 'Γ', 'Z', 'X', 'R', 'M', 'A']
+positons:  [0.0, 0.5, 1.0000000000000002, 1.707106781186545, 2.2071067811865466, 2.914213562373094, 3.414213562373096, 4.121320343559644, 4.6213203435596455]
+```
