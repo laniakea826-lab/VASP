@@ -383,6 +383,7 @@ print()
 print("orbitals: ", orb_indices)
 print("high symmetry points: ", k_orders)
 print("positons: ", np.array(x_ticks).tolist())
+print()
 
 save_kpts = input("save k-path information ( Y / N ) :\t")
 
